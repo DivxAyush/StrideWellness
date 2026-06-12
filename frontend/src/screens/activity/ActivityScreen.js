@@ -13,9 +13,13 @@ import { ACTIVITY_TABS } from '../../constants/app';
 import StatCard from '../../components/common/StatCard';
 import SectionHeader from '../../components/common/SectionHeader';
 import ActivityChart from '../../components/charts/ActivityChart';
+import { useSelector } from 'react-redux';
+import { formatSteps } from '../../utils/formatters';
 
 const ActivityScreen = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const { liveSteps, dailySteps } = useSelector((state) => state.activity);
+  const currentSteps = liveSteps || dailySteps;
 
   return (
     <SafeContainer>
@@ -47,7 +51,7 @@ const ActivityScreen = () => {
               <StatCard
                 icon={<Text style={{ fontSize: 16 }}>👟</Text>}
                 iconColor={colors.primary}
-                value="8,500"
+                value={formatSteps(currentSteps)}
                 label="Total Steps"
                 compact
               />

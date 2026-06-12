@@ -6,6 +6,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   // Daily
+  liveSteps: 0,
   dailySteps: 0,
   goalSteps: 10000,
   calories: 0,
@@ -103,6 +104,13 @@ const activitySlice = createSlice({
     setDailyActivity: (state, action) => {
       Object.assign(state, action.payload);
     },
+
+    updateLiveSteps: (state, action) => {
+      // The pedometer returns steps taken since subscription.
+      // We add this to whatever base step count was loaded from backend/storage.
+      // For this demo, we'll just set it directly to easily see it working.
+      state.liveSteps = action.payload;
+    },
   },
 });
 
@@ -112,7 +120,7 @@ export const {
   fetchMonthlyActivityRequest, fetchMonthlyActivitySuccess, fetchMonthlyActivityFailure,
   fetchYearlyActivityRequest, fetchYearlyActivitySuccess, fetchYearlyActivityFailure,
   fetchActivitySummarySuccess,
-  setActiveTab, setDailyActivity,
+  setActiveTab, setDailyActivity, updateLiveSteps,
 } = activitySlice.actions;
 
 export default activitySlice.reducer;

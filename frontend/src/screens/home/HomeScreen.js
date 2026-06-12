@@ -11,6 +11,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { colors, typography, spacing, borderRadius } from '../../theme';
 import { getRelativeDay, formatSteps, formatNumber } from '../../utils/formatters';
 import { fetchDailyActivityRequest } from '../../redux/slices/activitySlice';
+import { usePedometer } from '../../hooks/usePedometer';
 
 import SafeContainer from '../../components/common/SafeContainer';
 import Avatar from '../../components/common/Avatar';
@@ -23,15 +24,21 @@ const HomeScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const {
-    dailySteps, goalSteps, calories, distance, activeTime, intensity, isLoading,
+    liveSteps, dailySteps, goalSteps, calories, distance, activeTime, intensity, isLoading,
   } = useSelector((state) => state.activity);
+  
+  // Start pedometer
+  usePedometer();
+
+  // Prefer live sensor steps over mock daily steps
+  const currentSteps = liveSteps || dailySteps;
 
   useEffect(() => {
     dispatch(fetchDailyActivityRequest(new Date().toISOString()));
   }, [dispatch]);
 
-  const progressPercentage = Math.min(Math.round((dailySteps / goalSteps) * 100), 100);
-  const remainingSteps = Math.max(goalSteps - dailySteps, 0);
+  const progressPercentage = Math.min(Math.round((currentSteps / goalSteps) * 100), 100);
+  const remainingSteps = Math.max(goalSteps - currentSteps, 0);
 
   return (
     <SafeContainer>
@@ -63,7 +70,7 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.stepsLabel}>Steps</Text>
               <View style={styles.stepsValueContainer}>
                 <Text style={styles.shoeIcon}>👟 </Text>
-                <Text style={styles.stepsValue}>{formatSteps(dailySteps)}</Text>
+                <Text style={styles.stepsValue}>{formatSteps(currentSteps)}</Text>
               </View>
               <Text style={styles.goalText}>
                 Goal <Text style={styles.goalValue}>{formatSteps(goalSteps)}</Text>

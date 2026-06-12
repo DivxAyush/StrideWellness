@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Stride Wellness",
+    "slug": "stride-wellness",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "stridewellness",
+    "splash": {
+      "backgroundColor": "#0B0C10",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.stridewellness.app",
+      "infoPlist": {
+        "NSMotionUsageDescription": "Stride Wellness uses motion data to track your daily steps and activity."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B0C10",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "package": "com.stridewellness.app",
+      "permissions": [
+        "ACTIVITY_RECOGNITION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0B0C10"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    }
+  }
+}

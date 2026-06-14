@@ -2,10 +2,10 @@
   "name": "stride-wellness-api",
   "version": "1.0.0",
   "description": "Stride Wellness Backend API — Fastify + MongoDB",
-  "main": "src/index.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js",
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
     "test": "echo \"Tests pending\" && exit 0"
   },
   "dependencies": {

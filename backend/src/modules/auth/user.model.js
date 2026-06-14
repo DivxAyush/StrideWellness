@@ -38,6 +38,34 @@ const userSchema = new mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
+    age: {
+      type: Number,
+      default: null,
+    },
+    gender: {
+      type: String,
+      enum: ['Male', 'Female', 'Other', null],
+      default: null,
+    },
+    height: {
+      type: Number,
+      default: null, // in cm
+    },
+    weight: {
+      type: Number,
+      default: null, // in kg
+    },
+    bio: {
+      type: String,
+      default: null,
+      trim: true,
+      maxlength: 500,
+    },
+    fitnessGoal: {
+      type: String,
+      enum: ['Weight Loss', 'Muscle Gain', 'Maintenance', 'General Health', null],
+      default: null,
+    },
   },
   {
     timestamps: true,

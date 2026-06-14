@@ -12,7 +12,8 @@ const initializeFirebase = () => {
     const serviceAccount = require(config.firebaseServiceAccount);
 
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
+      credential: admin.credential.cert(serviceAccount),
+      storageBucket: 'stridewellness-2133.firebasestorage.app'
     });
 
     logger.info('Firebase Admin SDK Initialized Successfully');

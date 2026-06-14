@@ -5,6 +5,7 @@
 const Fastify = require('fastify');
 const cors = require('@fastify/cors');
 const formbody = require('@fastify/formbody');
+const multipart = require('@fastify/multipart');
 const jwt = require('@fastify/jwt');
 
 const config = require('./config/env');
@@ -17,6 +18,7 @@ const authRoutes = require('./modules/auth/auth.routes');
 const activityRoutes = require('./modules/activity/activity.routes');
 const waterRoutes = require('./modules/water/water.routes');
 const goalsRoutes = require('./modules/goals/goals.routes');
+const userRoutes = require('./modules/users/user.routes');
 
 const buildServer = async () => {
   const app = Fastify({
@@ -35,6 +37,7 @@ const buildServer = async () => {
     origin: '*', // For dev. In prod, specify the origin
   });
   await app.register(formbody);
+  await app.register(multipart);
 
   // JWT configuration
   await app.register(jwt, {
@@ -58,6 +61,7 @@ const buildServer = async () => {
   app.register(activityRoutes, { prefix: '/api/v1/activity' });
   app.register(waterRoutes, { prefix: '/api/v1/water' });
   app.register(goalsRoutes, { prefix: '/api/v1/goals' });
+  app.register(userRoutes, { prefix: '/api/v1/users' });
 
   // Global Error Handler
   app.setErrorHandler((error, request, reply) => {

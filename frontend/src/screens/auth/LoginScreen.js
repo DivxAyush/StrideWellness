@@ -16,6 +16,11 @@ import { validateEmail, validatePassword } from '../../utils/validators';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+
+WebBrowser.maybeCompleteAuthSession();
+
 const LoginScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { isLoading, error } = useSelector((state) => state.auth);
@@ -24,6 +29,21 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const passwordRef = useRef(null);
+
+  // Initialize Google Auth Request
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: 'YOUR_WEB_CLIENT_ID_HERE', // <-- THIS NEEDS TO BE REPLACED WITH ACTUAL ID
+  });
+
+  // Listen for Google Auth Response
+  React.useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      dispatch(googleLoginRequest({ idToken: id_token }));
+    } else if (response?.type === 'error') {
+      console.error('Google Sign In Error:', response.error);
+    }
+  }, [response, dispatch]);
 
   const handleLogin = useCallback(() => {
     const emailError = validateEmail(email);
@@ -43,8 +63,10 @@ const LoginScreen = ({ navigation }) => {
   }, [dispatch]);
 
   const handleGoogleLogin = useCallback(() => {
-    dispatch(googleLoginRequest());
-  }, [dispatch]);
+    if (request) {
+      promptAsync();
+    }
+  }, [request, promptAsync]);
 
   return (
     <KeyboardAvoidingView

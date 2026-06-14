@@ -45,12 +45,43 @@ function* handleRegister(action) {
   }
 }
 
-function* handleGoogleLogin() {
+function* handleGoogleLogin(action) {
   try {
-    // Google Sign-In flow will be implemented with Firebase
-    // For now, this is a placeholder for the Firebase Auth integration
-    yield put(googleLoginFailure('Google Sign-In requires Firebase configuration'));
+    const { idToken } = action.payload;
+    if (!idToken) {
+      throw new Error('Google ID token is missing. Please configure Google Sign-In on the frontend UI.');
+    }
+
+    // Since Firebase needs a credential to log in
+    // Note: The UI component should have already handled the Google popup and provided the Google idToken.
+    // We send this token directly to our backend, or if we need Firebase auth on frontend too:
+    // const { auth } = require('../config/firebase');
+    // const { GoogleAuthProvider, signInWithCredential } = require('firebase/auth');
+    // const credential = GoogleAuthProvider.credential(idToken);
+    // const userCredential = yield call(signInWithCredential, auth, credential);
+    // const firebaseIdToken = yield call([userCredential.user, 'getIdToken']);
+
+    // Actually, our backend now accepts the Firebase ID token OR the Google ID token?
+    // Wait, admin.auth().verifyIdToken() ONLY accepts Firebase ID tokens!
+    // So we MUST sign in to Firebase first on the frontend to get the Firebase ID token.
+
+    const { auth } = yield import('../config/firebase');
+    const { GoogleAuthProvider, signInWithCredential } = yield import('firebase/auth');
+    
+    const credential = GoogleAuthProvider.credential(idToken);
+    const userCredential = yield call(signInWithCredential, auth, credential);
+    const firebaseIdToken = yield call([userCredential.user, 'getIdToken']);
+
+    // Send the Firebase ID token to our backend
+    const response = yield call(authService.googleLogin, firebaseIdToken);
+    const { user, accessToken, refreshToken } = response.data.data;
+
+    yield call(storageService.setTokens, accessToken, refreshToken);
+    yield call(storageService.setUser, user);
+
+    yield put(googleLoginSuccess({ user, accessToken, refreshToken }));
   } catch (error) {
+    console.error('Google login error:', error);
     yield put(googleLoginFailure(error.message || 'Google login failed'));
   }
 }

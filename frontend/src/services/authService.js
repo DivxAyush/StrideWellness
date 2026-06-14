@@ -14,8 +14,8 @@ export const authService = {
     return api.post(ENDPOINTS.REGISTER, { name, email, password });
   },
 
-  googleLogin: (idToken) => {
-    return api.post(ENDPOINTS.GOOGLE_LOGIN, { idToken });
+  googleLogin: (token) => {
+    return api.post('/auth/firebase-login', { token });
   },
 
   refreshToken: (refreshToken) => {

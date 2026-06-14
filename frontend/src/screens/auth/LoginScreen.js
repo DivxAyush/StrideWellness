@@ -32,7 +32,7 @@ const LoginScreen = ({ navigation }) => {
 
   // Initialize Google Auth Request
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: 'YOUR_WEB_CLIENT_ID_HERE', // <-- THIS NEEDS TO BE REPLACED WITH ACTUAL ID
+    clientId: '646631884063-1om32ohecfria64co5c79kf6jh7o5666.apps.googleusercontent.com',
   });
 
   // Listen for Google Auth Response

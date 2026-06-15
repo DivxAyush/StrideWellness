@@ -3,8 +3,8 @@
  */
 
 // Use local URL for development or Render URL for production
-export const BASE_URL = 'http://10.139.223.230:3000/api/v1';
-// export const BASE_URL = 'https://stridewellness.onrender.com/api/v1';
+// export const BASE_URL = 'http://10.139.223.230:3000/api/v1';
+export const BASE_URL = 'https://stridewellness.onrender.com/api/v1';
 
 export const ENDPOINTS = {
   // Auth

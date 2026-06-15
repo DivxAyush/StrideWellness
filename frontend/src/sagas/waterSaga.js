@@ -8,6 +8,7 @@ import {
   addWaterRequest, addWaterSuccess, addWaterFailure,
   fetchDailyWaterRequest, fetchDailyWaterSuccess, fetchDailyWaterFailure,
   fetchWeeklyWaterSuccess, fetchMonthlyWaterSuccess,
+  fetchOverallWaterRequest, fetchOverallWaterSuccess, fetchOverallWaterFailure,
   fetchWaterStreakSuccess,
   syncWaterDataRequest, syncWaterDataSuccess, syncWaterDataFailure,
   updateWaterGoalRequest, updateWaterGoalSuccess,
@@ -32,6 +33,15 @@ function* handleFetchDailyWater(action) {
   }
 }
 
+function* handleFetchOverallWater(action) {
+  try {
+    const response = yield call(waterService.getOverallWater);
+    yield put(fetchOverallWaterSuccess(response.data.data));
+  } catch (error) {
+    yield put(fetchOverallWaterFailure(error.message));
+  }
+}
+
 function* handleUpdateWaterGoal(action) {
   try {
     yield call(waterService.updateGoal, action.payload);
@@ -44,5 +54,6 @@ function* handleUpdateWaterGoal(action) {
 export default function* waterSaga() {
   yield takeLatest(addWaterRequest.type, handleAddWater);
   yield takeLatest(fetchDailyWaterRequest.type, handleFetchDailyWater);
+  yield takeLatest(fetchOverallWaterRequest.type, handleFetchOverallWater);
   yield takeLatest(updateWaterGoalRequest.type, handleUpdateWaterGoal);
 }

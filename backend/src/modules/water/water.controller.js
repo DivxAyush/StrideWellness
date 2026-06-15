@@ -1,4 +1,5 @@
 const Water = require('./water.model');
+const Goal = require('../goals/goals.model');
 
 // @desc    Get daily water intake
 // @route   GET /api/v1/water/daily?date=YYYY-MM-DD
@@ -15,15 +16,24 @@ exports.getDailyWater = async (request, reply) => {
       date: targetDate,
     });
 
+    let waterGoal = 4000;
+    const goalDoc = await Goal.findOne({ user: request.user.id, type: 'water' });
+    if (goalDoc) {
+      waterGoal = goalDoc.target * 1000; // convert L to ml
+    }
+
     if (!water) {
       // Create one on the fly if it doesn't exist for today yet
       water = await Water.create({
         user: request.user.id,
         date: targetDate,
         totalIntake: 0,
-        dailyGoal: 4000,
+        dailyGoal: waterGoal,
         logs: [],
       });
+    } else if (water.dailyGoal !== waterGoal) {
+      water.dailyGoal = waterGoal;
+      await water.save();
     }
 
     reply.send({ success: true, data: water });
@@ -47,16 +57,23 @@ exports.logWater = async (request, reply) => {
       date: targetDate,
     });
 
+    let waterGoal = 4000;
+    const goalDoc = await Goal.findOne({ user: request.user.id, type: 'water' });
+    if (goalDoc) {
+      waterGoal = goalDoc.target * 1000; // convert L to ml
+    }
+
     if (!water) {
       water = await Water.create({
         user: request.user.id,
         date: targetDate,
         totalIntake: amount,
-        dailyGoal: 4000,
-        logs: [{ amount, type }],
+        dailyGoal: waterGoal,
+        logs: [{ amount, type, timestamp: new Date() }],
       });
     } else {
       water.totalIntake += amount;
+      water.dailyGoal = waterGoal;
       water.logs.unshift({ amount, type, timestamp: new Date() });
       await water.save();
     }

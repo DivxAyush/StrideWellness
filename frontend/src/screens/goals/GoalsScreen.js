@@ -68,7 +68,17 @@ const GoalsScreen = () => {
     if (existingGoal) {
       dispatch(updateGoalRequest({ id: existingGoal._id, data: { target: targetValue } }));
     } else {
-      dispatch(createGoalRequest({ type: editingGoal, target: targetValue }));
+      let title, unit, icon, color;
+      if (editingGoal === 'steps') {
+        title = 'Daily Steps'; unit = 'steps'; icon = 'walk'; color = '#3B82F6';
+      } else if (editingGoal === 'water') {
+        title = 'Hydration'; unit = 'L'; icon = 'water'; color = '#0ea5e9';
+      } else if (editingGoal === 'weight') {
+        title = 'Target Weight'; unit = 'kg'; icon = 'barbell'; color = '#F59E0B';
+      }
+      dispatch(createGoalRequest({ 
+        type: editingGoal, target: targetValue, title, unit, icon, color 
+      }));
     }
     setModalVisible(false);
   };

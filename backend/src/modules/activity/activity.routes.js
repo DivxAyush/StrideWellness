@@ -8,6 +8,14 @@ async function activityRoutes(fastify, options) {
   fastify.post('/sync', {
     preValidation: [fastify.authenticate],
   }, activityController.syncActivity);
+
+  fastify.get('/monthly', {
+    preValidation: [fastify.authenticate],
+  }, activityController.getMonthlyActivity);
+
+  fastify.get('/overall', {
+    preValidation: [fastify.authenticate],
+  }, activityController.getOverallActivity);
 }
 
 module.exports = activityRoutes;

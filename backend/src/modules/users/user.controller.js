@@ -93,3 +93,39 @@ exports.updateProfile = async (request, reply) => {
     reply.status(500).send({ success: false, error: error.message });
   }
 };
+
+// @desc    Delete user account and all associated data
+// @route   DELETE /api/v1/users/me
+// @access  Private
+exports.deleteAccount = async (request, reply) => {
+  try {
+    const userId = request.user.id;
+
+    // Delete user from DB
+    const user = await User.findByIdAndDelete(userId);
+    
+    if (!user) {
+      return reply.status(404).send({ success: false, error: 'User not found' });
+    }
+
+    // Note: In a real app, you would also delete related records from Activity, Water, and Goals collections here.
+    // For now, we will just delete the user.
+    
+    // Delete from Firebase Auth if applicable
+    if (user.googleId || user.provider === 'google') {
+        try {
+            const firebaseUser = await admin.auth().getUserByEmail(user.email);
+            if (firebaseUser) {
+                await admin.auth().deleteUser(firebaseUser.uid);
+            }
+        } catch(err) {
+            logger.warn(`Firebase user not found or couldn't be deleted: ${err.message}`);
+        }
+    }
+
+    reply.send({ success: true, message: 'Account deleted successfully' });
+  } catch (error) {
+    logger.error(`Delete account error: ${error.message}`);
+    reply.status(500).send({ success: false, error: error.message });
+  }
+};

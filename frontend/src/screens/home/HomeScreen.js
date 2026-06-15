@@ -2,11 +2,12 @@
  * HomeScreen — The main dashboard
  */
 
-import React, { useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, ScrollView, StyleSheet, Pressable, RefreshControl } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
+import * as Haptics from 'expo-haptics';
 
 import { colors, typography, spacing, borderRadius } from '../../theme';
 import { getRelativeDay, formatSteps, formatNumber } from '../../utils/formatters';
@@ -37,6 +38,21 @@ const HomeScreen = ({ navigation }) => {
     dispatch(fetchDailyActivityRequest(new Date().toISOString()));
   }, [dispatch]);
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // Vibrate when pulled
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    // Dispatch fetch to update stats
+    dispatch(fetchDailyActivityRequest(new Date().toISOString()));
+    // Simulate network delay for the animation
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, [dispatch]);
+
   const progressPercentage = Math.min(Math.round((currentSteps / goalSteps) * 100), 100);
   const remainingSteps = Math.max(goalSteps - currentSteps, 0);
 
@@ -45,6 +61,14 @@ const HomeScreen = ({ navigation }) => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            tintColor={colors.primary} 
+            colors={[colors.primary]} 
+          />
+        }
       >
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(100)} style={styles.header}>

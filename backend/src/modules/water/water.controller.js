@@ -66,3 +66,40 @@ exports.logWater = async (request, reply) => {
     reply.status(500).send({ success: false, error: error.message });
   }
 };
+
+// @desc    Get monthly water intake summary
+// @route   GET /api/v1/water/monthly?month=YYYY-MM
+// @access  Private
+exports.getMonthlyWater = async (request, reply) => {
+  try {
+    const { month } = request.query;
+    const targetMonth = month ? new Date(month) : new Date();
+    
+    const startOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
+    const endOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
+
+    const waterLogs = await Water.find({
+      user: request.user.id,
+      date: { $gte: startOfMonth, $lte: endOfMonth },
+    }).sort({ date: 1 });
+
+    reply.send({ success: true, data: waterLogs });
+  } catch (error) {
+    reply.status(500).send({ success: false, error: error.message });
+  }
+};
+
+// @desc    Get overall water intake summary
+// @route   GET /api/v1/water/overall
+// @access  Private
+exports.getOverallWater = async (request, reply) => {
+  try {
+    const waterLogs = await Water.find({
+      user: request.user.id,
+    }).sort({ date: 1 });
+
+    reply.send({ success: true, data: waterLogs });
+  } catch (error) {
+    reply.status(500).send({ success: false, error: error.message });
+  }
+};

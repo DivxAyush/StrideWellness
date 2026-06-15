@@ -22,12 +22,12 @@ export const ENDPOINTS = {
   DELETE_ACCOUNT: '/users/account',
 
   // Activities
-  DAILY_ACTIVITY: '/activities/daily',
-  WEEKLY_ACTIVITY: '/activities/weekly',
-  MONTHLY_ACTIVITY: '/activities/monthly',
-  YEARLY_ACTIVITY: '/activities/yearly',
-  LOG_ACTIVITY: '/activities',
-  ACTIVITY_SUMMARY: '/activities/summary',
+  DAILY_ACTIVITY: '/activity/daily',
+  WEEKLY_ACTIVITY: '/activity/weekly',
+  MONTHLY_ACTIVITY: '/activity/monthly',
+  YEARLY_ACTIVITY: '/activity/overall', // Map yearly to overall for now
+  LOG_ACTIVITY: '/activity/sync',
+  ACTIVITY_SUMMARY: '/activity/summary',
 
   // Water
   LOG_WATER: '/water/log',

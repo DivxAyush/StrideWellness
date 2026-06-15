@@ -84,3 +84,41 @@ exports.syncActivity = async (request, reply) => {
     reply.status(500).send({ success: false, error: error.message });
   }
 };
+
+// @desc    Get monthly activity summary
+// @route   GET /api/v1/activity/monthly?month=YYYY-MM
+// @access  Private
+exports.getMonthlyActivity = async (request, reply) => {
+  try {
+    const { month } = request.query;
+    const targetMonth = month ? new Date(month) : new Date();
+    
+    const startOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
+    const endOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
+
+    const activities = await Activity.find({
+      user: request.user.id,
+      date: { $gte: startOfMonth, $lte: endOfMonth },
+    }).sort({ date: 1 });
+
+    reply.send({ success: true, data: activities });
+  } catch (error) {
+    reply.status(500).send({ success: false, error: error.message });
+  }
+};
+
+// @desc    Get overall activity summary
+// @route   GET /api/v1/activity/overall
+// @access  Private
+exports.getOverallActivity = async (request, reply) => {
+  try {
+    const activities = await Activity.find({
+      user: request.user.id,
+    }).sort({ date: 1 });
+
+    // Aggregate by month or just return all
+    reply.send({ success: true, data: activities });
+  } catch (error) {
+    reply.status(500).send({ success: false, error: error.message });
+  }
+};

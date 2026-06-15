@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "646631884063",
+    "project_id": "stridewellness-2133",
+    "storage_bucket": "stridewellness-2133.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:646631884063:android:11d8bdefe1b36ae9bd9c2a",
+        "android_client_info": {
+          "package_name": "com.stridewellness.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "646631884063-0aldks9oahfle56csq5nukf04fbth7ho.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.stridewellness.app",
+            "certificate_hash": "808a855d596917859ddbcc259127a2ab3daf2785"
+          }
+        },
+        {
+          "client_id": "646631884063-1om32ohecfria64co5c79kf6jh7o5666.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-Z5zpP8eKw4115I5-sWosYZ1I3-Zg9vs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "646631884063-1om32ohecfria64co5c79kf6jh7o5666.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

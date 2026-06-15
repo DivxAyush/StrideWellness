@@ -10,7 +10,7 @@ import { colors, layout } from '../theme';
 
 // Placeholder screens until implemented
 import HomeScreen from '../screens/home/HomeScreen';
-import ActivityScreen from '../screens/activity/ActivityScreen';
+import ReportsScreen from '../screens/activity/ReportsScreen';
 import WaterScreen from '../screens/water/WaterScreen';
 import GoalsScreen from '../screens/goals/GoalsScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
@@ -27,8 +27,8 @@ const MainNavigator = () => {
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Activity') {
-            iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+          } else if (route.name === 'Reports') {
+            iconName = focused ? 'bar-chart' : 'bar-chart-outline';
           } else if (route.name === 'Water') {
             iconName = focused ? 'water' : 'water-outline';
           } else if (route.name === 'Goals') {
@@ -50,7 +50,7 @@ const MainNavigator = () => {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Activity" component={ActivityScreen} />
+      <Tab.Screen name="Reports" component={ReportsScreen} />
       <Tab.Screen name="Water" component={WaterScreen} />
       <Tab.Screen name="Goals" component={GoalsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />

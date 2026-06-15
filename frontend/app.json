@@ -8,6 +8,7 @@
     "userInterfaceStyle": "dark",
     "scheme": "stridewellness",
     "splash": {
+      "image": "./assets/splash-icon.png",
       "backgroundColor": "#0B0C10",
       "resizeMode": "contain"
     },
@@ -28,7 +29,8 @@
         "ACTIVITY_RECOGNITION",
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE"
-      ]
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,7 +40,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0B0C10"
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#0B0C10",
+          "imageWidth": 200
         }
       ],
       "expo-web-browser"

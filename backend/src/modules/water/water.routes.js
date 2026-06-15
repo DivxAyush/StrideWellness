@@ -8,6 +8,14 @@ async function waterRoutes(fastify, options) {
   fastify.post('/log', {
     preValidation: [fastify.authenticate],
   }, waterController.logWater);
+
+  fastify.get('/monthly', {
+    preValidation: [fastify.authenticate],
+  }, waterController.getMonthlyWater);
+
+  fastify.get('/overall', {
+    preValidation: [fastify.authenticate],
+  }, waterController.getOverallWater);
 }
 
 module.exports = waterRoutes;

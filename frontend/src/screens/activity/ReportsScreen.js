@@ -13,13 +13,37 @@ import { ACTIVITY_TABS } from '../../constants/app';
 import StatCard from '../../components/common/StatCard';
 import SectionHeader from '../../components/common/SectionHeader';
 import ActivityChart from '../../components/charts/ActivityChart';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { formatSteps } from '../../utils/formatters';
+import {
+  fetchDailyActivityRequest,
+  fetchWeeklyActivityRequest,
+  fetchMonthlyActivityRequest,
+  fetchYearlyActivityRequest,
+} from '../../redux/slices/activitySlice';
 
 const ActivityScreen = () => {
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState(0);
-  const { liveSteps, dailySteps } = useSelector((state) => state.activity);
-  const currentSteps = liveSteps || dailySteps;
+  const {
+    liveSteps, dailySteps, calories, distance, activeTime,
+    weeklyData, monthlyData, yearlyData
+  } = useSelector((state) => state.activity);
+
+  // For daily, use live sensor data if available
+  const currentSteps = activeTab === 0 ? (liveSteps || dailySteps) : dailySteps;
+
+  React.useEffect(() => {
+    const today = new Date().toISOString();
+    if (activeTab === 0) dispatch(fetchDailyActivityRequest(today));
+    else if (activeTab === 1) dispatch(fetchWeeklyActivityRequest(today));
+    else if (activeTab === 2) dispatch(fetchMonthlyActivityRequest({ month: today }));
+    else if (activeTab === 3) dispatch(fetchYearlyActivityRequest({ year: today }));
+  }, [activeTab, dispatch]);
+
+  const chartData = activeTab === 0 ? [] : // we can format hourlyData here
+    activeTab === 1 ? weeklyData :
+      activeTab === 2 ? monthlyData : yearlyData;
 
   return (
     <SafeContainer>
@@ -40,7 +64,7 @@ const ActivityScreen = () => {
 
         {/* Chart */}
         <Animated.View entering={FadeInUp.delay(200)}>
-          <ActivityChart delay={0} />
+          <ActivityChart data={chartData} delay={0} />
         </Animated.View>
 
         {/* Summary Stats */}
@@ -59,7 +83,7 @@ const ActivityScreen = () => {
               <StatCard
                 icon={<Ionicons name="flame" size={16} color={colors.warning} />}
                 iconColor={colors.warning}
-                value="400"
+                value={calories?.toString() || "0"}
                 unit="kcal"
                 label="Calories"
                 compact
@@ -70,7 +94,7 @@ const ActivityScreen = () => {
               <StatCard
                 icon={<Ionicons name="analytics" size={16} color={colors.secondaryAccent} />}
                 iconColor={colors.secondaryAccent}
-                value="6.5"
+                value={distance?.toString() || "0"}
                 unit="km"
                 label="Distance"
                 compact
@@ -79,7 +103,7 @@ const ActivityScreen = () => {
               <StatCard
                 icon={<Ionicons name="time" size={16} color={colors.primary} />}
                 iconColor={colors.primary}
-                value="52"
+                value={activeTime?.toString() || "0"}
                 unit="min"
                 label="Active Time"
                 compact
@@ -103,7 +127,7 @@ const ActivityScreen = () => {
             </View>
           </View>
         </Animated.View>
-        
+
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeContainer>

@@ -34,3 +34,27 @@ exports.createGoal = async (request, reply) => {
     reply.status(500).send({ success: false, error: error.message });
   }
 };
+
+// @desc    Update a goal
+// @route   PUT /api/v1/goals/:id
+// @access  Private
+exports.updateGoal = async (request, reply) => {
+  try {
+    const { id } = request.params;
+    const updateData = request.body;
+
+    const goal = await Goal.findOneAndUpdate(
+      { _id: id, user: request.user.id },
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+
+    if (!goal) {
+      return reply.status(404).send({ success: false, error: 'Goal not found' });
+    }
+
+    reply.send({ success: true, data: goal });
+  } catch (error) {
+    reply.status(500).send({ success: false, error: error.message });
+  }
+};

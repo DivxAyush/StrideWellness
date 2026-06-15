@@ -10,15 +10,6 @@ import { useSelector } from 'react-redux';
 import { colors, typography, spacing, borderRadius } from '../../theme';
 import SafeContainer from '../../components/common/SafeContainer';
 import Avatar from '../../components/common/Avatar';
-import Badge from '../../components/common/Badge';
-
-const MOCK_BADGES = [
-  { id: 1, title: '7 Day Streak', icon: <Text style={{ fontSize: 24 }}>🔥</Text>, earned: true },
-  { id: 2, title: '10k Steps', icon: <Text style={{ fontSize: 24 }}>👟</Text>, earned: true },
-  { id: 3, title: 'Early Bird', icon: <Text style={{ fontSize: 24 }}>🌅</Text>, earned: true },
-  { id: 4, title: 'Marathon', icon: <Text style={{ fontSize: 24 }}>🏃‍♂️</Text>, earned: false },
-  { id: 5, title: '30 Day Streak', icon: <Text style={{ fontSize: 24 }}>👑</Text>, earned: false },
-];
 
 const ProfileScreen = ({ navigation }) => {
   const { user } = useSelector((state) => state.auth);
@@ -63,22 +54,6 @@ const ProfileScreen = ({ navigation }) => {
               <Text style={styles.statLabel}>Total km</Text>
             </View>
           </View>
-        </Animated.View>
-
-        {/* Achievements */}
-        <Animated.View entering={FadeInUp.delay(300)} style={styles.achievementsContainer}>
-          <Text style={styles.sectionTitle}>Achievements</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesScroll}>
-            {MOCK_BADGES.map((badge, idx) => (
-              <Badge
-                key={badge.id}
-                title={badge.title}
-                icon={badge.icon}
-                earned={badge.earned}
-                delay={400 + idx * 100}
-              />
-            ))}
-          </ScrollView>
         </Animated.View>
 
       </ScrollView>
@@ -160,13 +135,6 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
     marginTop: 4,
-  },
-  achievementsContainer: {
-    marginTop: spacing.xxl,
-  },
-  badgesScroll: {
-    marginHorizontal: -layout.screenPaddingH,
-    paddingHorizontal: layout.screenPaddingH,
   },
 });
 

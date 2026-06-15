@@ -2,41 +2,81 @@
  * GoalsScreen — Manage step, water, and weight goals
  */
 
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, Pressable, Modal, TextInput } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../../theme';
 import SafeContainer from '../../components/common/SafeContainer';
 import ProgressRing from '../../components/common/ProgressRing';
+import Button from '../../components/common/Button';
+import Input from '../../components/common/Input';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchGoalsRequest, updateGoalRequest, createGoalRequest } from '../../redux/slices/goalsSlice';
 
-const GoalCard = ({ title, current, target, unit, icon, color, delay }) => {
-  const progress = Math.min((current / target) * 100, 100);
+const GoalCard = ({ title, current, target, unit, icon, color, delay, onPress }) => {
+  const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
 
   return (
-    <Animated.View entering={FadeInUp.delay(delay)} style={styles.goalCard}>
-      <View style={styles.goalInfo}>
-        <View style={[styles.iconWrap, { backgroundColor: `${color}15` }]}>
-          <Ionicons name={icon} size={20} color={color} />
+    <Animated.View entering={FadeInUp.delay(delay)}>
+      <Pressable style={styles.goalCard} onPress={onPress}>
+        <View style={styles.goalInfo}>
+          <View style={[styles.iconWrap, { backgroundColor: `${color}15` }]}>
+            <Ionicons name={icon} size={20} color={color} />
+          </View>
+          <Text style={styles.goalTitle}>{title}</Text>
+          <Text style={styles.goalProgress}>
+            <Text style={styles.current}>{current}</Text> / {target} {unit}
+          </Text>
         </View>
-        <Text style={styles.goalTitle}>{title}</Text>
-        <Text style={styles.goalProgress}>
-          <Text style={styles.current}>{current}</Text> / {target} {unit}
-        </Text>
-      </View>
-      <ProgressRing progress={progress} size={64} strokeWidth={6} color={color} percentageSize={14} />
+        <ProgressRing progress={progress} size={64} strokeWidth={6} color={color} percentageSize={14} />
+      </Pressable>
     </Animated.View>
   );
 };
 
 const GoalsScreen = () => {
+  const dispatch = useDispatch();
+  const { goals } = useSelector(state => state.goals);
+  const { dailySteps, calories, distance, activeTime } = useSelector(state => state.activity);
+  
+  // Find specific goals
+  const stepGoal = goals.find(g => g.type === 'steps') || { target: 10000 };
+  const waterGoal = goals.find(g => g.type === 'water') || { target: 4.0 };
+  const weightGoal = goals.find(g => g.type === 'weight') || { target: 70 };
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingGoal, setEditingGoal] = useState(null);
+  const [tempValue, setTempValue] = useState('');
+
+  useEffect(() => {
+    dispatch(fetchGoalsRequest());
+  }, [dispatch]);
+
+  const openEditModal = (type, currentTarget) => {
+    setEditingGoal(type);
+    setTempValue(currentTarget.toString());
+    setModalVisible(true);
+  };
+
+  const handleSaveGoal = () => {
+    const targetValue = parseFloat(tempValue);
+    if (isNaN(targetValue) || targetValue <= 0) return;
+
+    const existingGoal = goals.find(g => g.type === editingGoal);
+    
+    if (existingGoal) {
+      dispatch(updateGoalRequest({ id: existingGoal._id, data: { target: targetValue } }));
+    } else {
+      dispatch(createGoalRequest({ type: editingGoal, target: targetValue }));
+    }
+    setModalVisible(false);
+  };
+
   return (
     <SafeContainer>
       <View style={styles.header}>
         <Text style={styles.title}>Goals</Text>
-        <Pressable style={styles.addButton}>
-          <Ionicons name="add" size={24} color={colors.textPrimary} />
-        </Pressable>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -46,22 +86,24 @@ const GoalsScreen = () => {
 
         <GoalCard
           title="Daily Steps"
-          current={8500}
-          target={10000}
+          current={dailySteps || 0}
+          target={stepGoal.target}
           unit="steps"
           icon="walk"
           color={colors.primary}
           delay={200}
+          onPress={() => openEditModal('steps', stepGoal.target)}
         />
 
         <GoalCard
           title="Hydration"
-          current={2.5}
-          target={4.0}
+          current={0} // Replace with actual Redux daily water intake
+          target={waterGoal.target}
           unit="L"
           icon="water"
           color={colors.secondaryAccent}
           delay={300}
+          onPress={() => openEditModal('water', waterGoal.target)}
         />
 
         <Animated.View entering={FadeInDown.delay(400)} style={{ marginTop: spacing.xl }}>
@@ -70,14 +112,40 @@ const GoalsScreen = () => {
 
         <GoalCard
           title="Target Weight"
-          current={75}
-          target={70}
+          current={75} // Mock current weight
+          target={weightGoal.target}
           unit="kg"
           icon="barbell"
           color={colors.warning}
           delay={500}
+          onPress={() => openEditModal('weight', weightGoal.target)}
         />
       </ScrollView>
+
+      {/* Edit Modal */}
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              Update {editingGoal === 'steps' ? 'Step Goal' : editingGoal === 'water' ? 'Hydration Goal' : 'Target Weight'}
+            </Text>
+            <Input
+              value={tempValue}
+              onChangeText={setTempValue}
+              keyboardType="numeric"
+              placeholder="Enter target"
+            />
+            <View style={styles.modalActions}>
+              <Button title="Cancel" variant="outline" onPress={() => setModalVisible(false)} style={{ flex: 1, marginRight: spacing.sm }} />
+              <Button title="Save" onPress={handleSaveGoal} style={{ flex: 1 }} />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeContainer>
   );
 };
@@ -142,6 +210,26 @@ const styles = StyleSheet.create({
   current: {
     color: colors.textPrimary,
     fontFamily: 'Inter_600SemiBold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: spacing.xl,
+  },
+  modalContent: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
+  },
+  modalTitle: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    marginBottom: spacing.lg,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    marginTop: spacing.lg,
   },
 });
 

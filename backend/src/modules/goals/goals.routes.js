@@ -8,6 +8,10 @@ async function goalsRoutes(fastify, options) {
   fastify.post('/', {
     preValidation: [fastify.authenticate],
   }, goalsController.createGoal);
+
+  fastify.put('/:id', {
+    preValidation: [fastify.authenticate],
+  }, goalsController.updateGoal);
 }
 
 module.exports = goalsRoutes;

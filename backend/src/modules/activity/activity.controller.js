@@ -1,4 +1,5 @@
 const Activity = require('./activity.model');
+const Goal = require('../goals/goals.model');
 
 // @desc    Get daily activity
 // @route   GET /api/v1/activity/daily?date=YYYY-MM-DD
@@ -16,13 +17,19 @@ exports.getDailyActivity = async (request, reply) => {
       date: targetDate,
     });
 
+    let stepGoal = 10000;
+    const goalDoc = await Goal.findOne({ user: request.user.id, type: 'steps' });
+    if (goalDoc) {
+      stepGoal = goalDoc.target;
+    }
+
     // If no activity exists for today, return a default mock object for the UI to display
     if (!activity) {
       return reply.send({
         success: true,
         data: {
           steps: 0,
-          goalSteps: 10000,
+          goalSteps: stepGoal,
           calories: 0,
           distance: 0,
           activeTime: 0,
@@ -32,9 +39,9 @@ exports.getDailyActivity = async (request, reply) => {
       });
     }
 
-    // Mix in goal steps (hardcoded for now, could be fetched from user goals)
+    // Mix in goal steps (fetched from user goals)
     const data = activity.toObject();
-    data.goalSteps = 10000;
+    data.goalSteps = stepGoal;
 
     reply.send({ success: true, data });
   } catch (error) {

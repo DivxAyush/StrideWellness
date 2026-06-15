@@ -112,6 +112,19 @@ const activitySlice = createSlice({
       state.liveSteps = action.payload;
     },
   },
+  extraReducers: (builder) => {
+    // Listen for goal updates from the goals slice to keep the Home screen in sync instantly
+    builder.addCase('goals/updateGoalSuccess', (state, action) => {
+      if (action.payload && action.payload.type === 'steps') {
+        state.goalSteps = action.payload.target;
+      }
+    });
+    builder.addCase('goals/createGoalSuccess', (state, action) => {
+      if (action.payload && action.payload.type === 'steps') {
+        state.goalSteps = action.payload.target;
+      }
+    });
+  },
 });
 
 export const {

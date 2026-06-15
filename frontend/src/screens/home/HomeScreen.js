@@ -160,7 +160,7 @@ const HomeScreen = ({ navigation }) => {
           <SectionHeader
             title="Today's activity"
             action="View details"
-            onAction={() => navigation.navigate('Activity')}
+            onAction={() => navigation.navigate('Reports')}
           />
           <ActivityChart />
         </Animated.View>

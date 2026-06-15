@@ -28,6 +28,9 @@
       "permissions": [
         "ACTIVITY_RECOGNITION",
         "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "ACTIVITY_RECOGNITION",
+        "RECEIVE_BOOT_COMPLETED",
         "VIBRATE"
       ],
       "googleServicesFile": "./google-services.json"
@@ -51,6 +54,12 @@
       "eas": {
         "projectId": "6882c3fa-63ea-45fc-a4ca-f26ac01615e6"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/6882c3fa-63ea-45fc-a4ca-f26ac01615e6"
     }
   }
 }

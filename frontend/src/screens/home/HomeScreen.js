@@ -56,6 +56,10 @@ const HomeScreen = ({ navigation }) => {
   const progressPercentage = Math.min(Math.round((currentSteps / goalSteps) * 100), 100);
   const remainingSteps = Math.max(goalSteps - currentSteps, 0);
 
+  // Calculate live derived stats based on currentSteps
+  const liveDistance = currentSteps > dailySteps ? ((currentSteps * 0.762) / 1000).toFixed(2) : distance;
+  const liveCalories = currentSteps > dailySteps ? Math.round(currentSteps * 0.04) : calories;
+
   return (
     <SafeContainer>
       <ScrollView
@@ -118,7 +122,7 @@ const HomeScreen = ({ navigation }) => {
             <StatCard
               icon={<Ionicons name="flame" size={20} color={colors.warning} />}
               iconColor={colors.warning}
-              value={formatNumber(calories)}
+              value={formatNumber(liveCalories)}
               unit="kcal"
               label="Calories"
               delay={300}
@@ -147,7 +151,7 @@ const HomeScreen = ({ navigation }) => {
             <StatCard
               icon={<Ionicons name="analytics" size={20} color={colors.primary} />}
               iconColor={colors.primary}
-              value={distance}
+              value={liveDistance}
               unit="km"
               label="Distance"
               delay={600}

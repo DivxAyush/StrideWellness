@@ -3,7 +3,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Modal, TextInput } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Modal, TextInput, RefreshControl } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius } from '../../theme';
@@ -38,7 +38,10 @@ const GoalCard = ({ title, current, target, unit, icon, color, delay, onPress })
 const GoalsScreen = () => {
   const dispatch = useDispatch();
   const { goals } = useSelector(state => state.goals);
-  const { dailySteps, calories, distance, activeTime } = useSelector(state => state.activity);
+  const { dailySteps, liveSteps } = useSelector(state => state.activity);
+  const { currentIntake } = useSelector(state => state.water);
+  
+  const currentSteps = liveSteps || dailySteps || 0;
   
   // Find specific goals
   const stepGoal = goals.find(g => g.type === 'steps') || { target: 10000 };
@@ -48,9 +51,18 @@ const GoalsScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
   const [tempValue, setTempValue] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     dispatch(fetchGoalsRequest());
+  }, [dispatch]);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    dispatch(fetchGoalsRequest());
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
   }, [dispatch]);
 
   const openEditModal = (type, currentTarget) => {
@@ -89,14 +101,25 @@ const GoalsScreen = () => {
         <Text style={styles.title}>Goals</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            tintColor={colors.primary} 
+            colors={[colors.primary]} 
+          />
+        }
+      >
         <Animated.View entering={FadeInDown.delay(100)}>
           <Text style={styles.sectionTitle}>Daily Goals</Text>
         </Animated.View>
 
         <GoalCard
           title="Daily Steps"
-          current={dailySteps || 0}
+          current={currentSteps}
           target={stepGoal.target}
           unit="steps"
           icon="walk"
@@ -107,7 +130,7 @@ const GoalsScreen = () => {
 
         <GoalCard
           title="Hydration"
-          current={0} // Replace with actual Redux daily water intake
+          current={(currentIntake / 1000).toFixed(1)}
           target={waterGoal.target}
           unit="L"
           icon="water"

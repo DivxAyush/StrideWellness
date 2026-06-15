@@ -2,7 +2,7 @@
  * WaterScreen — Hydration tracking
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import { colors, typography, spacing, borderRadius } from '../../theme';
 import SafeContainer from '../../components/common/SafeContainer';
 import ProgressRing from '../../components/common/ProgressRing';
 import { addWaterRequest, fetchDailyWaterRequest, fetchOverallWaterRequest } from '../../redux/slices/waterSlice';
+import * as Haptics from 'expo-haptics';
 
 const QUICK_ACTIONS = [
   { amount: 250, label: 'Glass', icon: 'water-outline' },
@@ -20,7 +21,8 @@ const QUICK_ACTIONS = [
 
 const WaterScreen = () => {
   const dispatch = useDispatch();
-  const { currentIntake, dailyGoal, logs, overallData } = useSelector((state) => state.water);
+  const { currentIntake, dailyGoal, logs } = useSelector((state) => state.water);
+  const [showMoreLogs, setShowMoreLogs] = useState(false);
 
   useEffect(() => {
     dispatch(fetchDailyWaterRequest(new Date().toISOString()));
@@ -28,10 +30,13 @@ const WaterScreen = () => {
   }, [dispatch]);
 
   const handleAddWater = (amount) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     dispatch(addWaterRequest({ amount, type: 'quick' }));
   };
 
-  const progress = Math.min((currentIntake / dailyGoal) * 100, 100);
+  const progress = dailyGoal > 0 ? Math.min((currentIntake / dailyGoal) * 100, 100) : 0;
+  
+  const displayedLogs = showMoreLogs ? logs : logs?.slice(0, 10);
 
   return (
     <SafeContainer>
@@ -91,50 +96,38 @@ const WaterScreen = () => {
               <Text style={styles.emptyStateText}>Your drinks will appear here.</Text>
             </View>
           ) : (
-            <View style={styles.logList}>
-              {logs.map((log, index) => {
-                const logTime = new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                return (
-                  <View key={index} style={styles.logItem}>
-                    <View style={styles.logLeft}>
-                      <View style={styles.logIconWrap}>
-                        <Ionicons name="water" size={16} color={colors.secondaryAccent} />
+            <View style={styles.logListContainer}>
+              <ScrollView 
+                style={showMoreLogs ? { maxHeight: 450 } : null} 
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={true}
+              >
+                <View style={styles.logList}>
+                  {displayedLogs.map((log, index) => {
+                    const logTime = new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    return (
+                      <View key={index} style={styles.logItem}>
+                        <View style={styles.logLeft}>
+                          <View style={styles.logIconWrap}>
+                            <Ionicons name="water" size={16} color={colors.secondaryAccent} />
+                          </View>
+                          <View>
+                            <Text style={styles.logAmount}>{log.amount} ml</Text>
+                            <Text style={styles.logTime}>{logTime}</Text>
+                          </View>
+                        </View>
                       </View>
-                      <View>
-                        <Text style={styles.logAmount}>{log.amount} ml</Text>
-                        <Text style={styles.logTime}>{logTime}</Text>
-                      </View>
-                    </View>
-                  </View>
-                );
-              })}
+                    );
+                  })}
+                </View>
+              </ScrollView>
+              {logs.length > 10 && (
+                <Pressable style={styles.showMoreBtn} onPress={() => setShowMoreLogs(!showMoreLogs)}>
+                  <Text style={styles.showMoreText}>{showMoreLogs ? 'Show Less' : `Show All (${logs.length})`}</Text>
+                </Pressable>
+              )}
             </View>
           )}
-        </Animated.View>
-
-        {/* Lifetime Stats */}
-        <Animated.View entering={FadeInUp.delay(400)} style={styles.historyContainer}>
-          <Text style={styles.sectionTitle}>Lifetime Stats</Text>
-          <View style={styles.statsCard}>
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Total Logs Recorded</Text>
-              <Text style={styles.statValue}>
-                {overallData?.reduce((acc, day) => acc + (day.logs?.length || 0), 0) || 0} times
-              </Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Total Water Consumed</Text>
-              <Text style={styles.statValue}>
-                {((overallData?.reduce((acc, day) => acc + (day.totalIntake || 0), 0) || 0) / 1000).toFixed(1)} L
-              </Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Days Tracked</Text>
-              <Text style={styles.statValue}>{overallData?.length || 0} days</Text>
-            </View>
-          </View>
         </Animated.View>
         
         <View style={styles.bottomSpacer} />
@@ -242,9 +235,12 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     marginTop: spacing.sm,
   },
-  logList: {
+  logListContainer: {
     backgroundColor: colors.cardBackground,
     borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+  },
+  logList: {
     padding: spacing.md,
   },
   logItem: {
@@ -276,29 +272,15 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
   },
-  statsCard: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: borderRadius.xl,
-    padding: spacing.xl,
-  },
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  showMoreBtn: {
+    padding: spacing.md,
     alignItems: 'center',
-    paddingVertical: spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
   },
-  statLabel: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  statValue: {
+  showMoreText: {
     ...typography.bodyMedium,
-    color: colors.textPrimary,
-  },
-  statDivider: {
-    height: 1,
-    backgroundColor: colors.borderLight,
-    marginVertical: spacing.md,
+    color: colors.primary,
   },
   bottomSpacer: {
     height: 40,

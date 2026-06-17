@@ -29,9 +29,9 @@
         "ACTIVITY_RECOGNITION",
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
-        "ACTIVITY_RECOGNITION",
-        "RECEIVE_BOOT_COMPLETED",
-        "VIBRATE"
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_HEALTH",
+        "POST_NOTIFICATIONS"
       ],
       "googleServicesFile": "./google-services.json"
     },
@@ -48,7 +48,8 @@
           "imageWidth": 200
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "@notifee/react-native"
     ],
     "extra": {
       "eas": {

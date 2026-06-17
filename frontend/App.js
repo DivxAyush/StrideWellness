@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Provider } from 'react-redux';
-import { StatusBar } from 'react-native';
+import { StatusBar, Alert } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFonts } from 'expo-font';
+import * as Updates from 'expo-updates';
 import {
   Inter_300Light,
   Inter_400Regular,
@@ -24,6 +25,36 @@ export default function App() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
+
+  useEffect(() => {
+    async function checkForUpdates() {
+      try {
+        if (!__DEV__) {
+          const update = await Updates.checkForUpdateAsync();
+          if (update.isAvailable) {
+            Alert.alert(
+              'Update Available',
+              'A new version of Stride Wellness is available. Would you like to update now?',
+              [
+                { text: 'Later', style: 'cancel' },
+                {
+                  text: 'Update',
+                  onPress: async () => {
+                    await Updates.fetchUpdateAsync();
+                    await Updates.reloadAsync();
+                  },
+                },
+              ]
+            );
+          }
+        }
+      } catch (error) {
+        console.log('Error checking for updates:', error);
+      }
+    }
+    
+    checkForUpdates();
+  }, []);
 
   if (!fontsLoaded) {
     return null;

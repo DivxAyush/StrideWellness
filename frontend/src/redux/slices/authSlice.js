@@ -3,6 +3,8 @@
  */
 
 import { createSlice } from '@reduxjs/toolkit';
+import { authService } from '../../services/authService';
+import { storageService } from '../../services/storageService';
 
 const initialState = {
   user: null,
@@ -20,12 +22,12 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    // Login
-    loginRequest: (state, action) => {
+    // Internal reducers (renamed with _ to avoid clashing with Thunks)
+    _loginRequest: (state) => {
       state.isLoading = true;
       state.error = null;
     },
-    loginSuccess: (state, action) => {
+    _loginSuccess: (state, action) => {
       state.isLoading = false;
       state.isAuthenticated = true;
       state.isGuest = false;
@@ -34,17 +36,16 @@ const authSlice = createSlice({
       state.refreshToken = action.payload.refreshToken;
       state.error = null;
     },
-    loginFailure: (state, action) => {
+    _loginFailure: (state, action) => {
       state.isLoading = false;
       state.error = action.payload;
     },
 
-    // Register
-    registerRequest: (state, action) => {
+    _registerRequest: (state) => {
       state.isLoading = true;
       state.error = null;
     },
-    registerSuccess: (state, action) => {
+    _registerSuccess: (state, action) => {
       state.isLoading = false;
       state.isAuthenticated = true;
       state.isGuest = false;
@@ -53,17 +54,16 @@ const authSlice = createSlice({
       state.refreshToken = action.payload.refreshToken;
       state.error = null;
     },
-    registerFailure: (state, action) => {
+    _registerFailure: (state, action) => {
       state.isLoading = false;
       state.error = action.payload;
     },
 
-    // Google Login
-    googleLoginRequest: (state) => {
+    _googleLoginRequest: (state) => {
       state.isLoading = true;
       state.error = null;
     },
-    googleLoginSuccess: (state, action) => {
+    _googleLoginSuccess: (state, action) => {
       state.isLoading = false;
       state.isAuthenticated = true;
       state.isGuest = false;
@@ -72,16 +72,15 @@ const authSlice = createSlice({
       state.refreshToken = action.payload.refreshToken;
       state.error = null;
     },
-    googleLoginFailure: (state, action) => {
+    _googleLoginFailure: (state, action) => {
       state.isLoading = false;
       state.error = action.payload;
     },
 
-    // Guest Mode
-    guestLoginRequest: (state) => {
+    _guestLoginRequest: (state) => {
       state.isLoading = true;
     },
-    guestLoginSuccess: (state) => {
+    _guestLoginSuccess: (state) => {
       state.isLoading = false;
       state.isAuthenticated = true;
       state.isGuest = true;
@@ -89,11 +88,10 @@ const authSlice = createSlice({
       state.error = null;
     },
 
-    // Session Restore
-    restoreSessionRequest: (state) => {
+    _restoreSessionRequest: (state) => {
       state.isRestoringSession = true;
     },
-    restoreSessionSuccess: (state, action) => {
+    _restoreSessionSuccess: (state, action) => {
       state.isRestoringSession = false;
       state.isAuthenticated = true;
       state.isGuest = action.payload.isGuest || false;
@@ -101,55 +99,187 @@ const authSlice = createSlice({
       state.accessToken = action.payload.accessToken;
       state.refreshToken = action.payload.refreshToken;
     },
-    restoreSessionFailure: (state) => {
+    _restoreSessionFailure: (state) => {
       state.isRestoringSession = false;
       state.isAuthenticated = false;
     },
 
-    // Forgot Password
-    forgotPasswordRequest: (state, action) => {
+    _forgotPasswordRequest: (state) => {
       state.isLoading = true;
       state.error = null;
       state.forgotPasswordSuccess = false;
     },
-    forgotPasswordSuccess: (state) => {
+    _forgotPasswordSuccess: (state) => {
       state.isLoading = false;
       state.forgotPasswordSuccess = true;
     },
-    forgotPasswordFailure: (state, action) => {
+    _forgotPasswordFailure: (state, action) => {
       state.isLoading = false;
       state.error = action.payload;
     },
 
-    // Logout
-    logoutRequest: (state) => {
+    _logoutRequest: (state) => {
       state.isLoading = true;
     },
-    logoutSuccess: (state) => {
+    _logoutSuccess: (state) => {
       return { ...initialState, isRestoringSession: false };
     },
 
-    // Update Profile
     updateUser: (state, action) => {
       state.user = { ...state.user, ...action.payload };
     },
-
-    // Clear Error
     clearAuthError: (state) => {
       state.error = null;
     },
   },
 });
 
-export const {
-  loginRequest, loginSuccess, loginFailure,
-  registerRequest, registerSuccess, registerFailure,
-  googleLoginRequest, googleLoginSuccess, googleLoginFailure,
-  guestLoginRequest, guestLoginSuccess,
-  restoreSessionRequest, restoreSessionSuccess, restoreSessionFailure,
-  forgotPasswordRequest, forgotPasswordSuccess, forgotPasswordFailure,
-  logoutRequest, logoutSuccess,
-  updateUser, clearAuthError,
+const {
+  _loginRequest, _loginSuccess, _loginFailure,
+  _registerRequest, _registerSuccess, _registerFailure,
+  _googleLoginRequest, _googleLoginSuccess, _googleLoginFailure,
+  _guestLoginRequest, _guestLoginSuccess,
+  _restoreSessionRequest, _restoreSessionSuccess, _restoreSessionFailure,
+  _forgotPasswordRequest, _forgotPasswordSuccess, _forgotPasswordFailure,
+  _logoutRequest, _logoutSuccess
 } = authSlice.actions;
 
+export const { updateUser, clearAuthError } = authSlice.actions;
 export default authSlice.reducer;
+
+// --------------------------------------------------------------------------
+// Thunks (Replaces Sagas)
+// --------------------------------------------------------------------------
+
+export const loginRequest = (payload) => async (dispatch) => {
+  try {
+    dispatch(_loginRequest());
+    const response = await authService.login(payload.email, payload.password);
+    const { user, accessToken, refreshToken } = response.data.data;
+    await storageService.setTokens(accessToken, refreshToken);
+    await storageService.setUser(user);
+    dispatch(_loginSuccess({ user, accessToken, refreshToken }));
+  } catch (error) {
+    dispatch(_loginFailure(error.message || 'Login failed'));
+  }
+};
+
+export const registerRequest = (payload) => async (dispatch) => {
+  try {
+    dispatch(_registerRequest());
+    const response = await authService.register(payload.name, payload.email, payload.password);
+    const { user, accessToken, refreshToken } = response.data.data;
+    await storageService.setTokens(accessToken, refreshToken);
+    await storageService.setUser(user);
+    dispatch(_registerSuccess({ user, accessToken, refreshToken }));
+  } catch (error) {
+    dispatch(_registerFailure(error.message || 'Registration failed'));
+  }
+};
+
+export const googleLoginRequest = (payload) => async (dispatch) => {
+  try {
+    dispatch(_googleLoginRequest());
+    const { idToken } = payload;
+    if (!idToken) {
+      throw new Error('Google ID token is missing. Please configure Google Sign-In on the frontend UI.');
+    }
+
+    const { auth } = await import('../../config/firebase');
+    const { GoogleAuthProvider, signInWithCredential } = await import('firebase/auth');
+    
+    const credential = GoogleAuthProvider.credential(idToken);
+    const userCredential = await signInWithCredential(auth, credential);
+    const firebaseIdToken = await userCredential.user.getIdToken();
+
+    const response = await authService.googleLogin(firebaseIdToken);
+    const { user, accessToken, refreshToken } = response.data.data;
+
+    await storageService.setTokens(accessToken, refreshToken);
+    await storageService.setUser(user);
+
+    dispatch(_googleLoginSuccess({ user, accessToken, refreshToken }));
+  } catch (error) {
+    console.error('Google login error:', error);
+    dispatch(_googleLoginFailure(error.message || 'Google login failed'));
+  }
+};
+
+export const guestLoginRequest = () => async (dispatch) => {
+  try {
+    dispatch(_guestLoginRequest());
+    await storageService.setGuestData({
+      createdAt: new Date().toISOString(),
+      activities: [],
+      waterLogs: [],
+      goals: [],
+    });
+    dispatch(_guestLoginSuccess());
+  } catch (error) {
+    console.error('Guest login error:', error);
+  }
+};
+
+export const restoreSessionRequest = () => async (dispatch) => {
+  try {
+    dispatch(_restoreSessionRequest());
+    const accessToken = await storageService.getAccessToken();
+    const user = await storageService.getUser();
+
+    if (accessToken && user) {
+      const refreshToken = await storageService.getRefreshToken();
+      dispatch(_restoreSessionSuccess({
+        user,
+        accessToken,
+        refreshToken,
+        isGuest: false,
+      }));
+      return;
+    }
+
+    const guestData = await storageService.getGuestData();
+    if (guestData) {
+      dispatch(_restoreSessionSuccess({
+        user: { name: 'Guest', email: '', avatar: null },
+        accessToken: null,
+        refreshToken: null,
+        isGuest: true,
+      }));
+      return;
+    }
+
+    dispatch(_restoreSessionFailure());
+  } catch (error) {
+    dispatch(_restoreSessionFailure());
+  }
+};
+
+export const forgotPasswordRequest = (payload) => async (dispatch) => {
+  try {
+    dispatch(_forgotPasswordRequest());
+    await authService.forgotPassword(payload.email);
+    dispatch(_forgotPasswordSuccess());
+  } catch (error) {
+    dispatch(_forgotPasswordFailure(error.message || 'Failed to send reset email'));
+  }
+};
+
+export const logoutRequest = () => async (dispatch, getState) => {
+  try {
+    dispatch(_logoutRequest());
+    const isGuest = getState().auth.isGuest;
+    
+    if (!isGuest) {
+      try {
+        await authService.logout();
+      } catch (e) {
+        // Silent fail
+      }
+    }
+
+    await storageService.clearAll();
+    dispatch(_logoutSuccess());
+  } catch (error) {
+    dispatch(_logoutSuccess());
+  }
+};

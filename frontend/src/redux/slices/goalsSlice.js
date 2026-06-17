@@ -3,6 +3,7 @@
  */
 
 import { createSlice } from '@reduxjs/toolkit';
+import { goalsService } from '../../services/dataService';
 
 const initialState = {
  goals: [],
@@ -14,56 +15,103 @@ const goalsSlice = createSlice({
  name: 'goals',
  initialState,
  reducers: {
-  fetchGoalsRequest: (state) => { state.isLoading = true; state.error = null; },
-  fetchGoalsSuccess: (state, action) => {
+  _fetchGoalsRequest: (state) => { state.isLoading = true; state.error = null; },
+  _fetchGoalsSuccess: (state, action) => {
    state.isLoading = false;
    state.goals = action.payload;
   },
 
-  fetchGoalsFailure: (state, action) => {
+  _fetchGoalsFailure: (state, action) => {
    state.isLoading = false;
    state.error = action.payload;
   },
 
-  createGoalRequest: (state) => { state.isLoading = true; },
+  _createGoalRequest: (state) => { state.isLoading = true; },
   createGoalSuccess: (state, action) => {
    state.isLoading = false;
    state.goals.push(action.payload);
   },
 
-  createGoalFailure: (state, action) => {
+  _createGoalFailure: (state, action) => {
    state.isLoading = false;
    state.error = action.payload;
   },
 
-  updateGoalRequest: (state) => { state.isLoading = true; },
+  _updateGoalRequest: (state) => { state.isLoading = true; },
   updateGoalSuccess: (state, action) => {
    state.isLoading = false;
    const index = state.goals.findIndex((g) => g._id === action.payload._id);
    if (index !== -1) state.goals[index] = action.payload;
   },
-  updateGoalFailure: (state, action) => {
+  _updateGoalFailure: (state, action) => {
    state.isLoading = false;
    state.error = action.payload;
   },
 
-  deleteGoalRequest: (state) => { state.isLoading = true; },
-  deleteGoalSuccess: (state, action) => {
+  _deleteGoalRequest: (state) => { state.isLoading = true; },
+  _deleteGoalSuccess: (state, action) => {
    state.isLoading = false;
    state.goals = state.goals.filter((g) => g._id !== action.payload);
   },
-  deleteGoalFailure: (state, action) => {
+  _deleteGoalFailure: (state, action) => {
    state.isLoading = false;
    state.error = action.payload;
   },
  },
 });
 
-export const {
- fetchGoalsRequest, fetchGoalsSuccess, fetchGoalsFailure,
- createGoalRequest, createGoalSuccess, createGoalFailure,
- updateGoalRequest, updateGoalSuccess, updateGoalFailure,
- deleteGoalRequest, deleteGoalSuccess, deleteGoalFailure,
+const {
+ _fetchGoalsRequest, _fetchGoalsSuccess, _fetchGoalsFailure,
+ _createGoalRequest, _createGoalFailure,
+ _updateGoalRequest, _updateGoalFailure,
+ _deleteGoalRequest, _deleteGoalSuccess, _deleteGoalFailure,
 } = goalsSlice.actions;
 
+export const { createGoalSuccess, updateGoalSuccess } = goalsSlice.actions;
+
 export default goalsSlice.reducer;
+
+// --------------------------------------------------------------------------
+// Thunks
+// --------------------------------------------------------------------------
+
+export const fetchGoalsRequest = () => async (dispatch) => {
+  try {
+    dispatch(_fetchGoalsRequest());
+    const response = await goalsService.getGoals();
+    dispatch(_fetchGoalsSuccess(response.data.data));
+  } catch (error) {
+    dispatch(_fetchGoalsFailure(error.message));
+  }
+};
+
+export const createGoalRequest = (payload) => async (dispatch) => {
+  try {
+    dispatch(_createGoalRequest());
+    const response = await goalsService.createGoal(payload);
+    dispatch(createGoalSuccess(response.data.data));
+  } catch (error) {
+    dispatch(_createGoalFailure(error.message));
+  }
+};
+
+export const updateGoalRequest = (payload) => async (dispatch) => {
+  try {
+    dispatch(_updateGoalRequest());
+    const { id, ...data } = payload;
+    const response = await goalsService.updateGoal(id, data);
+    dispatch(updateGoalSuccess(response.data.data));
+  } catch (error) {
+    dispatch(_updateGoalFailure(error.message));
+  }
+};
+
+export const deleteGoalRequest = (payload) => async (dispatch) => {
+  try {
+    dispatch(_deleteGoalRequest());
+    await goalsService.deleteGoal(payload);
+    dispatch(_deleteGoalSuccess(payload));
+  } catch (error) {
+    dispatch(_deleteGoalFailure(error.message));
+  }
+};

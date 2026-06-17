@@ -3,6 +3,7 @@
  */
 
 import { createSlice } from '@reduxjs/toolkit';
+import { activityService } from '../../services/dataService';
 
 const initialState = {
   // Daily
@@ -38,11 +39,11 @@ const activitySlice = createSlice({
   name: 'activity',
   initialState,
   reducers: {
-    fetchDailyActivityRequest: (state) => {
+    _fetchDailyActivityRequest: (state) => {
       state.isLoading = true;
       state.error = null;
     },
-    fetchDailyActivitySuccess: (state, action) => {
+    _fetchDailyActivitySuccess: (state, action) => {
       state.isLoading = false;
       state.dailySteps = action.payload.steps || 0;
       state.goalSteps = action.payload.goalSteps || 10000;
@@ -52,41 +53,41 @@ const activitySlice = createSlice({
       state.intensity = action.payload.intensity || 0;
       state.hourlyData = action.payload.hourlyData || [];
     },
-    fetchDailyActivityFailure: (state, action) => {
+    _fetchDailyActivityFailure: (state, action) => {
       state.isLoading = false;
       state.error = action.payload;
     },
 
-    fetchWeeklyActivityRequest: (state) => {
+    _fetchWeeklyActivityRequest: (state) => {
       state.isLoading = true;
     },
-    fetchWeeklyActivitySuccess: (state, action) => {
+    _fetchWeeklyActivitySuccess: (state, action) => {
       state.isLoading = false;
       state.weeklyData = action.payload.data || [];
       state.weeklyAverage = action.payload.average || 0;
       state.mostActiveDay = action.payload.mostActiveDay || null;
     },
-    fetchWeeklyActivityFailure: (state, action) => {
+    _fetchWeeklyActivityFailure: (state, action) => {
       state.isLoading = false;
       state.error = action.payload;
     },
 
-    fetchMonthlyActivityRequest: (state) => { state.isLoading = true; },
-    fetchMonthlyActivitySuccess: (state, action) => {
+    _fetchMonthlyActivityRequest: (state) => { state.isLoading = true; },
+    _fetchMonthlyActivitySuccess: (state, action) => {
       state.isLoading = false;
       state.monthlyData = action.payload.data || [];
     },
-    fetchMonthlyActivityFailure: (state, action) => {
+    _fetchMonthlyActivityFailure: (state, action) => {
       state.isLoading = false;
       state.error = action.payload;
     },
 
-    fetchYearlyActivityRequest: (state) => { state.isLoading = true; },
-    fetchYearlyActivitySuccess: (state, action) => {
+    _fetchYearlyActivityRequest: (state) => { state.isLoading = true; },
+    _fetchYearlyActivitySuccess: (state, action) => {
       state.isLoading = false;
       state.yearlyData = action.payload.data || [];
     },
-    fetchYearlyActivityFailure: (state, action) => {
+    _fetchYearlyActivityFailure: (state, action) => {
       state.isLoading = false;
       state.error = action.payload;
     },
@@ -100,20 +101,15 @@ const activitySlice = createSlice({
       state.activeTab = action.payload;
     },
 
-    // For local/mock data
     setDailyActivity: (state, action) => {
       Object.assign(state, action.payload);
     },
 
     updateLiveSteps: (state, action) => {
-      // The pedometer returns steps taken since subscription.
-      // We add this to whatever base step count was loaded from backend/storage.
-      // For this demo, we'll just set it directly to easily see it working.
       state.liveSteps = action.payload;
     },
   },
   extraReducers: (builder) => {
-    // Listen for goal updates from the goals slice to keep the Home screen in sync instantly
     builder.addCase('goals/updateGoalSuccess', (state, action) => {
       if (action.payload && action.payload.type === 'steps') {
         state.goalSteps = action.payload.target;
@@ -127,13 +123,59 @@ const activitySlice = createSlice({
   },
 });
 
+const {
+  _fetchDailyActivityRequest, _fetchDailyActivitySuccess, _fetchDailyActivityFailure,
+  _fetchWeeklyActivityRequest, _fetchWeeklyActivitySuccess, _fetchWeeklyActivityFailure,
+  _fetchMonthlyActivityRequest, _fetchMonthlyActivitySuccess, _fetchMonthlyActivityFailure,
+  _fetchYearlyActivityRequest, _fetchYearlyActivitySuccess, _fetchYearlyActivityFailure,
+} = activitySlice.actions;
+
 export const {
-  fetchDailyActivityRequest, fetchDailyActivitySuccess, fetchDailyActivityFailure,
-  fetchWeeklyActivityRequest, fetchWeeklyActivitySuccess, fetchWeeklyActivityFailure,
-  fetchMonthlyActivityRequest, fetchMonthlyActivitySuccess, fetchMonthlyActivityFailure,
-  fetchYearlyActivityRequest, fetchYearlyActivitySuccess, fetchYearlyActivityFailure,
-  fetchActivitySummarySuccess,
-  setActiveTab, setDailyActivity, updateLiveSteps,
+  fetchActivitySummarySuccess, setActiveTab, setDailyActivity, updateLiveSteps,
 } = activitySlice.actions;
 
 export default activitySlice.reducer;
+
+// --------------------------------------------------------------------------
+// Thunks
+// --------------------------------------------------------------------------
+
+export const fetchDailyActivityRequest = (payload) => async (dispatch) => {
+  try {
+    dispatch(_fetchDailyActivityRequest());
+    const response = await activityService.getDailyActivity(payload);
+    dispatch(_fetchDailyActivitySuccess(response.data.data));
+  } catch (error) {
+    dispatch(_fetchDailyActivityFailure(error.message));
+  }
+};
+
+export const fetchWeeklyActivityRequest = (payload) => async (dispatch) => {
+  try {
+    dispatch(_fetchWeeklyActivityRequest());
+    const response = await activityService.getWeeklyActivity(payload);
+    dispatch(_fetchWeeklyActivitySuccess(response.data.data));
+  } catch (error) {
+    dispatch(_fetchWeeklyActivityFailure(error.message));
+  }
+};
+
+export const fetchMonthlyActivityRequest = (payload) => async (dispatch) => {
+  try {
+    dispatch(_fetchMonthlyActivityRequest());
+    const response = await activityService.getMonthlyActivity(payload?.month, payload?.year);
+    dispatch(_fetchMonthlyActivitySuccess(response.data.data));
+  } catch (error) {
+    dispatch(_fetchMonthlyActivityFailure(error.message));
+  }
+};
+
+export const fetchYearlyActivityRequest = (payload) => async (dispatch) => {
+  try {
+    dispatch(_fetchYearlyActivityRequest());
+    const response = await activityService.getYearlyActivity(payload);
+    dispatch(_fetchYearlyActivitySuccess(response.data.data));
+  } catch (error) {
+    dispatch(_fetchYearlyActivityFailure(error.message));
+  }
+};

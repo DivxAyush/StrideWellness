@@ -10,6 +10,7 @@ import goalsReducer from './slices/goalsSlice';
 import profileReducer from './slices/profileSlice';
 import settingsReducer from './slices/settingsSlice';
 import notificationsReducer from './slices/notificationsSlice';
+import challengesReducer from './slices/challengesSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -19,6 +20,7 @@ const rootReducer = combineReducers({
   profile: profileReducer,
   settings: settingsReducer,
   notifications: notificationsReducer,
+  challenges: challengesReducer,
 });
 
 export default rootReducer;

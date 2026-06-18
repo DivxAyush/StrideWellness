@@ -13,6 +13,8 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchGoalsRequest, updateGoalRequest, createGoalRequest } from '../../redux/slices/goalsSlice';
+import { loadChallenges, createNewChallenge } from '../../redux/slices/challengesSlice';
+import { useNavigation } from '@react-navigation/native';
 
 const GoalCard = ({ title, current, target, unit, icon, color, delay, onPress }) => {
   const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
@@ -40,6 +42,8 @@ const GoalsScreen = () => {
   const { goals } = useSelector(state => state.goals);
   const { dailySteps, liveSteps } = useSelector(state => state.activity);
   const { currentIntake } = useSelector(state => state.water);
+  const { challenges } = useSelector(state => state.challenges);
+  const navigation = useNavigation();
   
   const currentSteps = liveSteps || dailySteps || 0;
   
@@ -53,8 +57,13 @@ const GoalsScreen = () => {
   const [tempValue, setTempValue] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
+  const [challengeModalVisible, setChallengeModalVisible] = useState(false);
+  const [challengeTitle, setChallengeTitle] = useState('');
+  const [challengeDays, setChallengeDays] = useState('30');
+
   useEffect(() => {
     dispatch(fetchGoalsRequest());
+    dispatch(loadChallenges());
   }, [dispatch]);
 
   const onRefresh = React.useCallback(() => {
@@ -93,6 +102,15 @@ const GoalsScreen = () => {
       }));
     }
     setModalVisible(false);
+  };
+
+  const handleCreateChallenge = () => {
+    const days = parseInt(challengeDays, 10);
+    if (!challengeTitle.trim() || isNaN(days) || days <= 0) return;
+    dispatch(createNewChallenge(challengeTitle, days));
+    setChallengeModalVisible(false);
+    setChallengeTitle('');
+    setChallengeDays('30');
   };
 
   return (
@@ -153,6 +171,42 @@ const GoalsScreen = () => {
           delay={500}
           onPress={() => openEditModal('weight', weightGoal.target)}
         />
+
+        <Animated.View entering={FadeInDown.delay(600)} style={[{ marginTop: spacing.xl, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+          <Text style={styles.sectionTitle}>Active Challenges</Text>
+          <Pressable onPress={() => setChallengeModalVisible(true)} style={styles.addChallengeBtn}>
+            <Ionicons name="add" size={20} color={colors.primary} />
+            <Text style={styles.addChallengeText}>New</Text>
+          </Pressable>
+        </Animated.View>
+
+        {challenges && challenges.length > 0 ? (
+          challenges.map((challenge, idx) => {
+            const progress = (challenge.completedDates.length / challenge.totalDays) * 100;
+            return (
+              <Animated.View key={challenge.id} entering={FadeInUp.delay(700 + idx * 100)}>
+                <Pressable 
+                  style={styles.goalCard} 
+                  onPress={() => navigation.navigate('ChallengeDetail', { challengeId: challenge.id })}
+                >
+                  <View style={styles.goalInfo}>
+                    <View style={[styles.iconWrap, { backgroundColor: `${colors.success}15` }]}>
+                      <Ionicons name="calendar" size={20} color={colors.success} />
+                    </View>
+                    <Text style={styles.goalTitle}>{challenge.title}</Text>
+                    <Text style={styles.goalProgress}>
+                      <Text style={styles.current}>{challenge.completedDates.length}</Text> / {challenge.totalDays} days
+                    </Text>
+                  </View>
+                  <ProgressRing progress={progress} size={64} strokeWidth={6} color={colors.success} percentageSize={14} />
+                </Pressable>
+              </Animated.View>
+            )
+          })
+        ) : (
+          <Text style={{ color: colors.textTertiary, ...typography.caption }}>No active challenges. Start one today!</Text>
+        )}
+
       </ScrollView>
 
       {/* Edit Modal */}
@@ -175,6 +229,39 @@ const GoalsScreen = () => {
             <View style={styles.modalActions}>
               <Button title="Cancel" variant="outline" onPress={() => setModalVisible(false)} style={{ flex: 1, marginRight: spacing.sm }} />
               <Button title="Save" onPress={handleSaveGoal} style={{ flex: 1 }} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Create Challenge Modal */}
+      <Modal
+        visible={challengeModalVisible}
+        transparent={true}
+        animationType="slide"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>New Challenge</Text>
+            
+            <Text style={{ color: colors.textSecondary, marginBottom: spacing.xs }}>Challenge Title</Text>
+            <Input
+              value={challengeTitle}
+              onChangeText={setChallengeTitle}
+              placeholder="e.g. Daily Yoga, 10k Steps"
+            />
+
+            <Text style={{ color: colors.textSecondary, marginBottom: spacing.xs, marginTop: spacing.md }}>Duration (Days)</Text>
+            <Input
+              value={challengeDays}
+              onChangeText={setChallengeDays}
+              keyboardType="numeric"
+              placeholder="e.g. 30"
+            />
+
+            <View style={styles.modalActions}>
+              <Button title="Cancel" variant="outline" onPress={() => setChallengeModalVisible(false)} style={{ flex: 1, marginRight: spacing.sm }} />
+              <Button title="Start Challenge" onPress={handleCreateChallenge} style={{ flex: 1 }} />
             </View>
           </View>
         </View>
@@ -264,6 +351,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: spacing.lg,
   },
+  addChallengeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${colors.primary}15`,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.sm,
+  },
+  addChallengeText: {
+    color: colors.primary,
+    ...typography.caption,
+    fontFamily: 'Inter_600SemiBold',
+    marginLeft: 4,
+  }
 });
 
 export default GoalsScreen;

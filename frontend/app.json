@@ -30,8 +30,7 @@
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
         "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_HEALTH",
-        "POST_NOTIFICATIONS"
+        "FOREGROUND_SERVICE_HEALTH"
       ],
       "googleServicesFile": "./google-services.json"
     },
@@ -48,8 +47,7 @@
           "imageWidth": 200
         }
       ],
-      "expo-web-browser",
-      "@notifee/react-native"
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {

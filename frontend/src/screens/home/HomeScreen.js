@@ -25,7 +25,7 @@ const HomeScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const {
-    liveSteps, dailySteps, goalSteps, calories, distance, activeTime, intensity, isLoading,
+    liveSteps, dailySteps, goalSteps, calories, distance, activeTime, intensity, isLoading, hourlyData,
   } = useSelector((state) => state.activity);
   
   // Start pedometer
@@ -166,7 +166,7 @@ const HomeScreen = ({ navigation }) => {
             action="View details"
             onAction={() => navigation.navigate('Reports')}
           />
-          <ActivityChart />
+          <ActivityChart data={hourlyData} />
         </Animated.View>
 
         <View style={styles.bottomSpacer} />

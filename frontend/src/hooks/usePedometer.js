@@ -3,8 +3,9 @@ import { AppState } from 'react-native';
 import { Pedometer } from 'expo-sensors';
 import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import notifee, { AndroidImportance } from '@notifee/react-native';
-import { updateLiveSteps } from '../redux/slices/activitySlice';
+
+// import ExpoActivityRecognition from 'expo-activity-recognition';
+import { updateLiveSteps, updateHourlyData } from '../redux/slices/activitySlice';
 import { activityService } from '../services/dataService';
 
 export const usePedometer = () => {
@@ -16,6 +17,8 @@ export const usePedometer = () => {
  const dailyStepsRef = useRef(dailySteps || 0);
  const currentSessionStepsRef = useRef(0);
  const lastSyncedStepsRef = useRef(0);
+ const currentActivityRef = useRef('unknown');
+ const hourlyDataRef = useRef(Array(24).fill(0));
 
  // Keep ref updated to avoid stale closures
  useEffect(() => {
@@ -68,19 +71,40 @@ export const usePedometer = () => {
     if (isAvailable) {
      const todayStr = new Date().toISOString().split('T')[0];
      const localStepsStr = await AsyncStorage.getItem(`steps_${todayStr}`);
-     const localSteps = localStepsStr ? parseInt(localStepsStr, 10) : 0;
-
-     const baseSteps = Math.max(dailyStepsRef.current, localSteps);
+     const baseSteps = localStepsStr ? parseInt(localStepsStr, 10) : 0;
      dailyStepsRef.current = baseSteps;
+
+     const hourlyDataStr = await AsyncStorage.getItem(`hourly_steps_${todayStr}`);
+     if (hourlyDataStr) {
+       hourlyDataRef.current = JSON.parse(hourlyDataStr);
+     } else {
+       hourlyDataRef.current = Array(24).fill(0);
+       // Distribute baseSteps realistically across previous hours so graph looks correct
+       if (baseSteps > 0) {
+         const currentHour = new Date().getHours();
+         const startHour = Math.max(0, currentHour - 8); // Spread over last 8 hours max
+         const hoursToFill = currentHour - startHour + 1;
+         const stepsPerHour = Math.floor(baseSteps / hoursToFill);
+         const remainder = baseSteps % hoursToFill;
+         
+         for (let i = startHour; i <= currentHour; i++) {
+           hourlyDataRef.current[i] = stepsPerHour + (i === currentHour ? remainder : 0);
+         }
+       }
+       AsyncStorage.setItem(`hourly_steps_${todayStr}`, JSON.stringify(hourlyDataRef.current));
+     }
+     dispatch(updateHourlyData([...hourlyDataRef.current]));
+
+     dispatch(updateLiveSteps(baseSteps));
      lastSyncedStepsRef.current = baseSteps;
 
      // Setup Notifee Foreground Service Notification
-     await notifee.requestPermission();
-     const channelId = await notifee.createChannel({
-       id: 'step_counter',
-       name: 'Step Counter',
-       importance: AndroidImportance.LOW,
-     });
+     // await notifee.requestPermission();
+     // const channelId = await notifee.createChannel({
+     //   id: 'step_counter',
+     //   name: 'Step Counter',
+     //   importance: AndroidImportance.LOW,
+     // });
 
      let lastNotifiedSteps = 0;
      const targetSteps = goalSteps || 10000;
@@ -93,49 +117,75 @@ export const usePedometer = () => {
        if (steps - lastNotifiedSteps < 5 && lastNotifiedSteps !== 0) return;
        lastNotifiedSteps = steps;
 
-       try {
-         await notifee.displayNotification({
-           id: 'step_counter_notification',
-           title: '👟 Stride Wellness is Active',
-           body: `You have taken ${steps} / ${targetSteps} steps today!`,
-           android: {
-             channelId,
-             asForegroundService: true,
-             color: '#3B82F6',
-             colorized: true,
-             ongoing: true,
-             progress: {
-               max: targetSteps,
-               current: steps,
-             },
-             smallIcon: 'ic_launcher',
-             pressAction: {
-               id: 'default',
-             },
-           },
-         });
-       } catch (e) {
-         console.log('Notifee error:', e);
-       }
+       // try {
+       //   await notifee.displayNotification({
+       //     id: 'step_counter_notification',
+       //     title: '👟 Stride Wellness is Active',
+       //     body: `You have taken ${steps} / ${targetSteps} steps today!`,
+       //     android: {
+       //       channelId,
+       //       asForegroundService: true,
+       //       color: '#3B82F6',
+       //       colorized: true,
+       //       ongoing: true,
+       //       progress: {
+       //         max: targetSteps,
+       //         current: steps,
+       //       },
+       //       smallIcon: 'ic_launcher',
+       //       pressAction: {
+       //         id: 'default',
+       //       },
+       //     },
+       //   });
+       // } catch (e) {
+       //   console.log('Notifee error:', e);
+       // }
      };
 
      // Initial Notification
      updateNotification(baseSteps);
 
-     let initialOffset = null;
+     // Setup Activity Recognition
+     // try {
+     //   const actPerm = await ExpoActivityRecognition.requestPermissions();
+     //   if (actPerm.granted) {
+     //     await ExpoActivityRecognition.setupObserver(10000);
+     //     ExpoActivityRecognition.addListener('onActivityChange', ({ activity }) => {
+     //       console.log(`Activity changed: ${activity}`);
+     //       currentActivityRef.current = activity;
+     //     });
+     //   }
+     // } catch (e) {
+     //   console.log('Activity recognition setup error', e);
+     // }
+
+     let lastHardwareSteps = null;
 
      subscription = Pedometer.watchStepCount((result) => {
-      if (initialOffset === null) {
-       initialOffset = result.steps;
+      if (lastHardwareSteps === null) {
+       lastHardwareSteps = result.steps;
+       return;
       }
 
-      const actualSessionSteps = result.steps - initialOffset;
-      currentSessionStepsRef.current = actualSessionSteps;
+      const hardwareStepsDelta = result.steps - lastHardwareSteps;
+      lastHardwareSteps = result.steps;
 
-      const newTotal = dailyStepsRef.current + actualSessionSteps;
+      // Skip tracking if cycling or driving
+      if (currentActivityRef.current === 'cycling' || currentActivityRef.current === 'driving') {
+        return;
+      }
+
+      currentSessionStepsRef.current += hardwareStepsDelta;
+      const newTotal = dailyStepsRef.current + currentSessionStepsRef.current;
 
       dispatch(updateLiveSteps(newTotal));
       AsyncStorage.setItem(`steps_${todayStr}`, newTotal.toString());
+
+      const currentHour = new Date().getHours();
+      hourlyDataRef.current[currentHour] += hardwareStepsDelta;
+      dispatch(updateHourlyData([...hourlyDataRef.current]));
+      AsyncStorage.setItem(`hourly_steps_${todayStr}`, JSON.stringify(hourlyDataRef.current));
 
       // Update Foreground Service Notification
       updateNotification(newTotal);

@@ -12,6 +12,7 @@ import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 import SettingsScreen from '../screens/settings/SettingsScreen';
+import ChallengeDetailScreen from '../screens/goals/ChallengeDetailScreen';
 import { storageService } from '../services/storageService';
 import { restoreSessionRequest } from '../redux/slices/authSlice';
 import { colors } from '../theme';
@@ -71,6 +72,11 @@ const AppNavigator = () => {
             <Stack.Screen 
               name="Settings" 
               component={SettingsScreen} 
+              options={{ animation: 'slide_from_right' }}
+            />
+            <Stack.Screen 
+              name="ChallengeDetail" 
+              component={ChallengeDetailScreen} 
               options={{ animation: 'slide_from_right' }}
             />
           </Stack.Group>

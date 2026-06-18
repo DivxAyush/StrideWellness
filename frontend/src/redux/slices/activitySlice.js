@@ -51,7 +51,9 @@ const activitySlice = createSlice({
       state.distance = action.payload.distance || 0;
       state.activeTime = action.payload.activeTime || 0;
       state.intensity = action.payload.intensity || 0;
-      state.hourlyData = action.payload.hourlyData || [];
+      if (action.payload.hourlyData && action.payload.hourlyData.length > 0) {
+        state.hourlyData = action.payload.hourlyData;
+      }
     },
     _fetchDailyActivityFailure: (state, action) => {
       state.isLoading = false;
@@ -108,6 +110,9 @@ const activitySlice = createSlice({
     updateLiveSteps: (state, action) => {
       state.liveSteps = action.payload;
     },
+    updateHourlyData: (state, action) => {
+      state.hourlyData = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase('goals/updateGoalSuccess', (state, action) => {
@@ -131,7 +136,7 @@ const {
 } = activitySlice.actions;
 
 export const {
-  fetchActivitySummarySuccess, setActiveTab, setDailyActivity, updateLiveSteps,
+  fetchActivitySummarySuccess, setActiveTab, setDailyActivity, updateLiveSteps, updateHourlyData,
 } = activitySlice.actions;
 
 export default activitySlice.reducer;

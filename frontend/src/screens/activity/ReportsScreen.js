@@ -27,7 +27,7 @@ const ActivityScreen = () => {
   const [activeTab, setActiveTab] = useState(0);
   const {
     liveSteps, dailySteps, calories, distance, activeTime,
-    weeklyData, monthlyData, yearlyData
+    weeklyData, monthlyData, yearlyData, hourlyData
   } = useSelector((state) => state.activity);
 
   // For daily, use live sensor data if available
@@ -41,7 +41,7 @@ const ActivityScreen = () => {
     else if (activeTab === 3) dispatch(fetchYearlyActivityRequest({ year: today }));
   }, [activeTab, dispatch]);
 
-  const chartData = activeTab === 0 ? [] : // we can format hourlyData here
+  const chartData = activeTab === 0 ? hourlyData :
     activeTab === 1 ? weeklyData :
       activeTab === 2 ? monthlyData : yearlyData;
 

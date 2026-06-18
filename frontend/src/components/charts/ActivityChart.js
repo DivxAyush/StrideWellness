@@ -13,6 +13,25 @@ const { width } = Dimensions.get('window');
 const ActivityChart = ({ data = [], delay = 0 }) => {
   // Format data for Gifted Charts
   const chartData = useMemo(() => {
+    // Check if we received the hourly array of length 24
+    if (data && data.length === 24) {
+      const formatted = data.map((steps, index) => {
+        let timeLabel = '';
+        if (index === 0) timeLabel = '12 AM';
+        else if (index === 6) timeLabel = '6 AM';
+        else if (index === 12) timeLabel = '12 PM';
+        else if (index === 18) timeLabel = '6 PM';
+        else if (index === 23) timeLabel = '11 PM';
+        
+        return { value: steps, label: timeLabel };
+      });
+      // Optionally trim future hours that are 0 to make the graph look better
+      const currentHour = new Date().getHours();
+      // Even if we trim, we need at least 2 points to draw a line
+      const activeData = formatted.slice(0, Math.max(currentHour + 1, 2));
+      return activeData;
+    }
+
     if (!data || data.length === 0) {
       // Mock data for the concept design if none provided
       return [
